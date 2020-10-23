@@ -2034,7 +2034,13 @@ class Map extends Camera {
      * @see [Create a draggable point](https://www.mapbox.com/mapbox-gl-js/example/drag-a-point/)
      */
     setPaintProperty(layerId: string, name: string, value: any, options: StyleSetterOptions = {}) {
-        this.style.setPaintProperty(layerId, name, value, options);
+        if (Array.isArray(layerId)) {
+            layerId.map((l_id) => {
+                this.style.setPaintProperty(l_id, name, value, options);
+            });
+        } else {
+            this.style.setPaintProperty(layerId, name, value, options);
+        }
         return this._update(true);
     }
 

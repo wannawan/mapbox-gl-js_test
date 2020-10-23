@@ -208,6 +208,7 @@ class FillBucket implements Bucket {
                 lineSegment.primitiveLength += ring.length;
             }
 
+
             let indices;
             if (false) {
                 indices = earcut(flattened, holeIndices);
@@ -346,6 +347,46 @@ class FillBucket implements Bucket {
             triangleSegment.primitiveLength += indices.length / 3;
         }
         this.programConfigurations.populatePaintArrays(this.layoutVertexArray.length, feature, index, imagePositions, canonical);
+    }
+
+    xxx() {
+        // let combined_polygons = [];
+        // for (let p in polygon) {
+        //     combined_polygons = combined_polygons.concat(polygon[p]);
+        // }
+        //
+        // console.log('combined_polygons', combined_polygons)
+        // let polygons = [];
+        // for (let i = 0; i < indices.length; i = i+3) {
+        //     let indice1 = indices[i];
+        //     let indice2 = indices[i + 1];
+        //     let indice3 = indices[i + 2];
+        //
+        //     let poly= [];
+        //     poly.push(combined_polygons[indice1])
+        //     poly.push(combined_polygons[indice2])
+        //     poly.push(combined_polygons[indice3])
+        //     polygons.push(poly)
+        // }
+        // console.log("new polygon", polygons);
+        // let st_polygons = [];
+        // //st_polygons.push('(8192 0, 8192 8192, 0 8192, 0 0, 8192 0)')
+        // for (let i in polygons){
+        //     let poly = polygons[i];
+        //     let st_polygon = [];
+        //     //console.log("polygon", polygon)
+        //     for (let j in poly) {
+        //         let point = poly[j];
+        //        // console.log('point', point)
+        //         st_polygon.push(point.x + ' ' + point.y)
+        //     }
+        //     st_polygon.push(poly[0].x + ' ' + poly[0].y)
+        //
+        //     st_polygons.push('('+st_polygon.join(', ')+')')
+        // }
+        //
+        // console.log(st_polygons.join(', '));
+
     }
 }
 
