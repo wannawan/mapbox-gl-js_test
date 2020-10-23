@@ -1940,6 +1940,10 @@ class Map extends Camera {
         return this.style.getLayer(id);
     }
 
+    getLayerIds() {
+        return this.style.getLayerIds();
+    }
+
     /**
      * Sets the zoom extent for the specified style layer. The zoom extent includes the
      * [minimum zoom level](https://docs.mapbox.com/mapbox-gl-js/style-spec/#layer-minzoom)
