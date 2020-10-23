@@ -1,6 +1,7 @@
 // @flow
 
 import {FillLayoutArray} from '../array_types';
+import libtess from 'libtess/libtess.debug.js'
 
 import {members as layoutAttributes} from './fill_attributes';
 import SegmentVector from '../segment';
@@ -207,7 +208,131 @@ class FillBucket implements Bucket {
                 lineSegment.primitiveLength += ring.length;
             }
 
-            const indices = earcut(flattened, holeIndices);
+            let indices;
+            if (false) {
+                indices = earcut(flattened, holeIndices);
+            } else {
+                const vertexCallback = (data, polyVertArray) => {
+                    polyVertArray[polyVertArray.length] = data[0];
+                    polyVertArray[polyVertArray.length] = data[1];
+                };
+
+                const begincallback = (type) => {
+                    if (type !== libtess.primitiveType.GL_TRIANGLES) {
+                        console.log('expected TRIANGLES but got type: ' + type);
+                    }
+                };
+
+                const errorcallback = (errno) => {
+                    console.log('error callback');
+                    console.log('error number: ' + errno);
+                };
+
+                const combinecallback = (coords, data, weight) => {
+                    return [coords[0], coords[1], coords[2]];
+                };
+
+                const edgeCallback = (flag) => {
+                    // don't really care about the flag, but need no-strip/no-fan behavior
+                    // console.log('edge flag: ' + flag);
+                };
+
+                let contours = [], point_map = {}, point_count = 0,
+                    tessy = new libtess.GluTesselator(), triangleVerts = [],
+                    new_indices = [],
+                    infinite = 300000, min_x = infinite, max_x = -infinite, min_y = infinite, max_y = -infinite;
+
+                polygon.map((poly) => {
+                    let new_poly = [];
+                    const poly_len = poly.length;
+                    poly.map((point, index) => {
+                        new_poly.push(point.x);
+                        new_poly.push(point.y);
+                        // get point xy range
+                        min_x = Math.min(min_x, point.x);
+                        max_x = Math.max(max_x, point.x);
+                        min_y = Math.min(min_y, point.y);
+                        max_y = Math.max(max_y, point.y);
+
+                        if (index !== poly_len - 1) {
+                            point_map[point.x * 8192 + point.y] = point_count;
+                        }
+                        point_count += 1;
+                    });
+                    contours.push(new_poly);
+                });
+
+                tessy.gluTessCallback(libtess.gluEnum.GLU_TESS_VERTEX_DATA, vertexCallback);
+                tessy.gluTessCallback(libtess.gluEnum.GLU_TESS_BEGIN, begincallback);
+                tessy.gluTessCallback(libtess.gluEnum.GLU_TESS_ERROR, errorcallback);
+                tessy.gluTessCallback(libtess.gluEnum.GLU_TESS_COMBINE, combinecallback);
+                tessy.gluTessCallback(libtess.gluEnum.GLU_TESS_EDGE_FLAG, edgeCallback);
+
+                tessy.gluTessNormal(0, 0, 1);
+
+                tessy.gluTessBeginPolygon(triangleVerts);
+
+                for (var i = 0; i < contours.length; i++) {
+                    tessy.gluTessBeginContour();
+                    var contour = contours[i];
+                    for (var j = 0; j < contour.length; j += 2) {
+                        var coords = [contour[j], contour[j + 1], 0];
+                        tessy.gluTessVertex(coords, coords);
+                    }
+                    tessy.gluTessEndContour();
+                }
+                tessy.gluTessEndPolygon();
+
+                for (let i = 0; i < triangleVerts.length; i = i + 2) {
+                    let map_index = triangleVerts[i] * 8192 + triangleVerts[i + 1];
+                    let p_i = point_map[map_index];
+                    if (p_i === undefined) {
+                        // find nearest one
+                        let vert_x = Math.floor(triangleVerts[i]), vert_y = Math.floor(triangleVerts[i + 1]),
+                            distance = 1, match_x, match_y, find_match = false,
+                            match_cases = [[-1, -1], [-1, 1], [1, -1], [1, 1]], m, k;
+                        while (true) {
+                            if (vert_x + distance > max_x && vert_x - distance < min_x && vert_y + distance > max_y && vert_y - distance < min_y) {
+                                break;
+                            }
+                            for (m = 0; m <= distance; m++) {
+                                for (k = 0; k <= distance; k++) {
+                                    if (m <= distance - 1 && k <= distance - 1) continue;
+                                    for (let m_case_index in match_cases) {
+                                        let m_case = match_cases[m_case_index];
+                                        match_x = vert_x + m_case[0] * m;
+                                        match_y = vert_y + m_case[1] * k;
+                                        if (point_map[match_x * 8192 + match_y] !== undefined) {
+                                            find_match = true;
+                                            break;
+                                        }
+                                    }
+                                    if (find_match) break;
+                                }
+                                if (find_match) break;
+                            }
+
+                            if (find_match) {
+                                break
+                            } else {
+                                distance += 1;
+                            }
+                        }
+
+                        if (find_match) {
+                            new_indices.push(point_map[match_x * 8192 + match_y]);
+                        } else {
+                            console.error("not find any nearby point");
+                            return
+                        }
+                    } else {
+                        new_indices.push(p_i);
+                    }
+                }
+
+                indices = new_indices;
+            }
+
             assert(indices.length % 3 === 0);
 
             for (let i = 0; i < indices.length; i += 3) {
