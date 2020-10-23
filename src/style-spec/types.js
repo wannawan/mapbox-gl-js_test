@@ -103,7 +103,13 @@ export type RasterSourceSpecification = {
     "tileSize"?: number,
     "scheme"?: "xyz" | "tms",
     "attribution"?: string,
-    "volatile"?: boolean
+    "volatile"?: boolean,
+    "requestdata"?: VectorSourceRequestSpecification
+}
+
+export type VectorSourceRequestSpecification = {
+    "dataset"?: string,
+    "otherdata"?: string,
 }
 
 export type RasterDEMSourceSpecification = {
@@ -134,7 +140,8 @@ export type GeoJSONSourceSpecification = {|
     "clusterProperties"?: mixed,
     "lineMetrics"?: boolean,
     "generateId"?: boolean,
-    "promoteId"?: PromoteIdSpecification
+    "promoteId"?: PromoteIdSpecification,
+    "jsondata"?: string,
 |}
 
 export type VideoSourceSpecification = {|

@@ -82,6 +82,7 @@ class GeoJSONSource extends Evented implements Source {
     _collectResourceTiming: boolean;
     _resourceTiming: Array<PerformanceResourceTiming>;
     _removed: boolean;
+    jsondata: ?string;
 
     /**
      * @private
@@ -116,6 +117,7 @@ class GeoJSONSource extends Evented implements Source {
         if (options.type) this.type = options.type;
         if (options.attribution) this.attribution = options.attribution;
         this.promoteId = options.promoteId;
+        this.jsondata = options.jsondata || '';
 
         const scale = EXTENT / this.tileSize;
 
@@ -273,6 +275,13 @@ class GeoJSONSource extends Evented implements Source {
             options.request.collectResourceTiming = this._collectResourceTiming;
         } else {
             options.data = JSON.stringify(data);
+        }
+        if (this.jsondata !== '') {
+            options.request['method'] = 'POST';
+            options.request['body'] = this.jsondata;
+            options.request['headers'] = {
+                'Content-Type': 'application/json'
+            };
         }
 
         // target {this.type}.loadData rather than literally geojson.loadData,

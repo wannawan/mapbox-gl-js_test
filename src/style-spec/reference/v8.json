@@ -435,6 +435,10 @@
     "promoteId": {
       "type": "promoteId",
       "doc": "A property to use as a feature id (for feature state). Either a property name, or an object of the form `{<sourceLayer>: <propertyName>}`."
+    },
+    "jsondata": {
+      "type": "*",
+      "doc": "json data sent with GeoJSON url."
     }
   },
   "source_video": {
